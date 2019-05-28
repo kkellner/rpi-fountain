@@ -3,12 +3,15 @@ Description=RPi Fountain
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 -u /home/pi/fountain.py
-WorkingDirectory=/home/pi
-#StandardOutput=inherit
-#StandardError=inherit
-StandardOutput=file:/var/log/fountain.log
-StandardError=file:/var/log/fountain.log
+ExecStart=/usr/bin/python3 -u /home/pi/rpi-fountain/fountain.py
+WorkingDirectory=/home/pi/rpi-fountain
+StandardOutput=inherit
+StandardError=inherit
+# The following "file:" option requires systemd version 236 or newer 
+# 2019-04-08-raspbian-stretch-lite has version 232
+# To show version run: systemctl --version
+#StandardOutput=file:/var/log/fountain.log
+#StandardError=file:/var/log/fountain.log
 Restart=always
 User=root
 

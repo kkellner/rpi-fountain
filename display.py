@@ -11,8 +11,17 @@ import RPi.GPIO as GPIO
 import neopixel
 
 
+
 class Display:
     """Handle fountain display operations"""
+
+    RED = 0x100000  # (0x10, 0, 0) also works
+    YELLOW = (0x10, 0x10, 0)
+    GREEN = (0, 0x10, 0)
+    AQUA = (0, 0x10, 0x10)
+    BLUE = (0, 0, 0x10)
+    PURPLE = (0x10, 0, 0x10)
+    BLACK = (0, 0, 0)
 
     # Configure GPIO pins
     motion_detect_pin = 17  # G17
@@ -31,7 +40,11 @@ class Display:
                         pixel_order=neopixel.GRB)
 
 
-        self.pixels.fill((0, 0, 255))
+        for i in range(255):
+            self.pixels.fill((0, 0, i))
+            #self.pixels[0] = Display.BLUE
+            time.sleep(0.002)
+        self.pixels.fill((0, 0, 0))
                     
         # Configure motion detection
         GPIO.setup(Display.motion_detect_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)

@@ -13,13 +13,17 @@ class WaterLevel:
     """Handle fountain water level operations"""
 
     def __init__(self):
+        self.water_level = None
         self.water_level_sensor = mp.VL53L1X()
-        logging.error("water_level_sensor: %s" % self.water_level_sensor)
-        #self.water_level_sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)
-
-        #monitor_water_level_thread = threading.Thread(target=self.monitor_water_level)
-        #monitor_water_level_thread.daemon = True
-       # monitor_water_level_thread.start()
+        self.water_level_sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)
+        value_mm = self.water_level_sensor.get_measurement()
+        if value_mm != -1: 
+            logging.info("water level sensor initialized. Value: %s" % value_mm)
+            monitor_water_level_thread = threading.Thread(target=self.monitor_water_level)
+            monitor_water_level_thread.daemon = True
+            monitor_water_level_thread.start()
+        else:
+            logging.error("water level sensor initialize error")
 
 
     def monitor_water_level(self):

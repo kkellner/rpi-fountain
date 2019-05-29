@@ -20,11 +20,16 @@ class HttpServer():
         #Handler = http.server.SimpleHTTPRequestHandler(directory="/")
         #httpd = socketserver.TCPServer(("", PORT), Handler)
         socketserver.TCPServer.allow_reuse_address = True
-        httpd = socketserver.TCPServer(('0.0.0.0', PORT), GetRequestHandler)
+        self.httpd = socketserver.TCPServer(('0.0.0.0', PORT), GetRequestHandler)
         logging.info("serving at port: %d", PORT)
 
-        httpd.serve_forever(poll_interval=0.5)
+        self.httpd.serve_forever(poll_interval=0.5)
         logging.info("after serve_forever")
+
+    def shutdown(self):
+        self.httpd.server_close()
+        self.httpd._BaseServer__shutdown_request = True
+        # httpd.shutdown()
 
 
 

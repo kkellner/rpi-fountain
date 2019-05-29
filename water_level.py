@@ -14,11 +14,12 @@ class WaterLevel:
 
     def __init__(self):
         self.water_level_sensor = mp.VL53L1X()
-        self.water_level_sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)
+        logging.error("water_level_sensor: %s" % self.water_level_sensor)
+        #self.water_level_sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)
 
-        monitor_water_level_thread = threading.Thread(target=self.monitor_water_level)
-        monitor_water_level_thread.daemon = True
-        monitor_water_level_thread.start()
+        #monitor_water_level_thread = threading.Thread(target=self.monitor_water_level)
+        #monitor_water_level_thread.daemon = True
+       # monitor_water_level_thread.start()
 
 
     def monitor_water_level(self):

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type='text/javascript' src='http://code.jquery.com/jquery-1.9.1.js'></script>
+    <script type='text/javascript'>//<![CDATA[ 
+
+        var fountainData = {} /*
+            "waterLevelPercentFull": 99,
+            "waterLevelState": "OK",
+            "waterTemperature": 88,
+            "fountainTemperature": 77,
+            "rPiTemperature": 66,
+            "waterDepth": 5.5,
+            "cpuPercent": 44,
+            "wifiSignal": 33
+        }; */
+
+        $(document).ready(function () {
+            autoRefresh()
+        });
+
+        $(window).load(function () {
+            drawPercentCircle();
+        });
+
+        /*
+        window.addEventListener("click", function (event) {
+            updateData();
+        });
+        */
+
+        function autoRefresh() {
+            getLatestData()
+            setTimeout(autoRefresh, 1000);
+        }
+
+        function getLatestData() {
+            $.ajax({
+                url: "http://rpitest.local/v1"
+            }).then(function (data) {
+                fountainData = data;
+                updateData();
+            });
+        }
+
+        function updateData() {
+
+            for (var elementId in fountainData) {
+                var element = document.getElementById(elementId);
+                if (element != null) {
+                    element.innerText = fountainData[elementId]
+                }
+            }
+            //drawPercentCircle();
+        }
+
+        function drawPercentCircle() {
+            var canvas1 = document.getElementById("canvas");
+            var context = canvas1.getContext("2d");
+            context.beginPath();
+            context.fillStyle = "red";
+            context.strokeStyle = "black";
+            context.lineWidth = 1;
+            context.arc((canvas.width / 2), (canvas.height / 2), (canvas.width / 2) / 2, 0, 2 * Math.PI, false);
+            context.fill();
+            //context.stroke();
+        }
+    //]]>
+    </script>
+
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            border: 0;
+            overflow: hidden;
+            display: block;
+            font-size: 2vw;
+        }
+
+        canvas {
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        th {
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            background-color: #ccc;
+        }
+
+        #overlay {
+            top: 50%;
+            left: 52%;
+            z-index: 2;
+            margin: 0;
+            text-align: center;
+            vertical-align: middle;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            font-size: 12vw;
+        }
+
+        .center {
+            position: relative;
+        }
+
+        #container {
+            padding-top: 30px
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="container">
+        <div class="center">
+            <canvas id="canvas"></canvas><br />
+            <div id="overlay"><span id="waterLevelPercentFull"></span>%</div>
+        </div>
+        <table>
+            <tr>
+                <th colspan="2">Temperatures</th>
+            </tr>
+            <tr>
+                <td>Water:</td>
+                <td><span id="waterTemperature"></span>&deg;</td>
+            </tr>
+            <tr>
+                <td>Fountain:</td>
+                <td><span id="fountainTemperature"></span>&deg;</td>
+            </tr>
+            <tr>
+                <td>RPi:</td>
+                <td><span id="rpiTemperature"></span>&deg;</td>
+            </tr>
+            <tr>
+                <th colspan="2">Details</th>
+            </tr>
+            <tr>
+                <td>Water Level:</td>
+                <td><span id="waterDepth"></span> inches</td>
+            </tr>
+            <tr>
+                <td>Water State:</td>
+                <td><span id="waterLevelState"></span></td>
+            </tr>
+            <tr>
+                <td>CPU:</td>
+                <td><span id="cpuPercent"></span>%</td>
+            </tr>
+            <tr>
+                <td>Wifi signal:</td>
+                <td><span id="wifiSignal"></span>%</td>
+            </tr>
+            <tr>
+                <td>RPi Time:</td>
+                <td><span id="rpiTime"></span></td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+
+</html>

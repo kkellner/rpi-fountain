@@ -4,6 +4,8 @@
 #
 
 import logging
+import time
+from datetime import datetime
 import http.server
 import socketserver
 import json
@@ -56,7 +58,13 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
         water_percent_full = fountain.water_level.get_percent_full()
         water_depth_status = fountain.water_level.get_status()
 
+
         if self.path == '/':
+            # serve the file!
+            self.path = "display.html"
+            return http.server.SimpleHTTPRequestHandler.do_GET(self)
+
+        elif self.path == '/test':
             if water_depth is not None:
                 data = "Water Depth: %.1f<br/>" % water_depth
                 data += "Water Percent Full: %.1f<br/>" % water_percent_full
@@ -80,10 +88,12 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "waterLevelState": water_depth_status.name,
                 "waterTemperature": 61,
                 "fountainTemperature": 83,
-                "rPiTemperature": 92,
+                "rpiTemperature": 92,
                 "waterDepth": water_depth,
                 "cpuPercent": psutil.cpu_percent(),
-                "wifiSignal": 47
+                "wifiSignal": 47,
+                #"rpiTime": time.strftime("%m-%d-%Y %H:%M:%S.%f")
+                "rpiTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
             }
 
             #response['note_text'] = "example text"
@@ -94,6 +104,7 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.protocol_version = 'HTTP/1.1'
             self.send_response(200, 'OK')
             #self.send_header('Connection', 'Keep-Alive')
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header('Content-type', 'application/json')
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()

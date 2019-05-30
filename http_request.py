@@ -44,14 +44,21 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
     # def __init__(self, host_port_tuple, streamhandler, controllers):
     #    logging.info("init GetRequestHandler")
 
+    def log_message(self, format, *args):
+        logging.info(format % args)
+
     def do_GET(self):
 
         #logging.info("testvar: %s" % self.server.testvar)
 
         if self.path == '/':
-            value = fountain.water_level.getWaterDepth()
-            if value is not None:
-                data = "Water level: %.1f" % value
+            water_depth = fountain.water_level.get_depth()
+            water_percent_full = fountain.water_level.get_percent_full()
+            water_depth_status = fountain.water_level.get_status()
+            if water_depth is not None:
+                data = "Water Depth: %.1f<br/>" % water_depth
+                data += "Water Percent Full: %.1f<br/>" % water_percent_full
+                data += "Water Depth Status: %s<br/>" % water_depth_status
             else:
                 data = "Water sensor not initialized"
 
@@ -66,9 +73,11 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         elif self.path == '/v1':
 
+            water_depth = fountain.water_level.get_water_depth()
+
                 # Create the response
             response = {
-                'water_level': fountain.water_level,
+                'water_depth': water_depth,
                 'customer_id': 345,
                 'location_id': 456,
             }

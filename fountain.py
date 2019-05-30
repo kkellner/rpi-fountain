@@ -34,7 +34,7 @@ class Fountain:
         self.water_level = None
 
         # Docs: https://docs.python.org/3/library/logging.html
-        FORMAT = '%(asctime)-15s %(threadName)s %(levelname)6s %(message)s'
+        FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
         logging.basicConfig(level=logging.NOTSET, format=FORMAT)
 
         signal.signal(signal.SIGINT, self.signal_handler)

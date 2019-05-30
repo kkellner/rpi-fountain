@@ -17,9 +17,14 @@ class Status(Enum):
     STARTUP = 1
     SHUTDOWN = 2
     ERROR = 3
-    WATER_LEVEL_CRITICAL = 4
-    WATER_LEVEL_LOW = 5
-    WATER_LEVEL_OK = 6
+    WATER_LEVEL_UNKNOWN = 10
+    WATER_LEVEL_EMPTY = 11      # Blink Red
+    WATER_LEVEL_CRITICAL = 12   # Red
+    WATER_LEVEL_LOW = 13        # Blink Yellow
+    WATER_LEVEL_OK = 14        # Green
+    WATER_LEVEL_FULL = 15      # Blink Green
+
+
 
 
 class Color:
@@ -69,10 +74,10 @@ class Display:
         logging.info('In motionHandler channel: %s' % channel)
         self._stop_display_off_timer()
 
-        # TODO: Get water level
-        waterHeight = self.fountain.water_level.getWaterDepth()
-        logging.info("waterHeight: %s" % waterHeight)
-        self.showStatus(Status.WATER_LEVEL_OK, 0)
+        water_depth_status = self.fountain.water_level.get_status()
+        logging.info("water_depth_status: %s" % water_depth_status)
+        displayStatus = Status[water_depth_status.name]
+        self.showStatus(displayStatus, 0)
 
         self.display_off_timer = threading.Timer(
             Display.display_auto_off_time_seconds, self.turnOffDisplay)
@@ -152,6 +157,17 @@ class Display:
         self.pixels.show()
         time.sleep(speed)
 
+    def _WATER_LEVEL_FULL_Sequence(self):
+        speed = 0.2
+        self.pixels[0] = Color.GREEN
+        self.pixels[1] = Color.BLACK
+        self.pixels.show()
+        time.sleep(speed)
+        self.pixels[0] = Color.BLACK
+        self.pixels[1] = Color.GREEN
+        self.pixels.show()
+        time.sleep(speed)
+
     def _WATER_LEVEL_OK_Sequence(self):
         speed = 0.1
         self.pixels[0] = Color.GREEN
@@ -171,6 +187,13 @@ class Display:
         time.sleep(speed)
 
     def _WATER_LEVEL_CRITICAL_Sequence(self):
+        speed = 0.1
+        self.pixels[0] = Color.RED
+        self.pixels[1] = Color.RED
+        self.pixels.show()
+        time.sleep(speed)
+
+    def _WATER_LEVEL_EMPTY_Sequence(self):
         speed = 0.2
         self.pixels[0] = Color.RED
         self.pixels[1] = Color.BLACK

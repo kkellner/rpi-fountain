@@ -78,7 +78,7 @@ class WaterLevel:
             # Only print the water level every 3 seconds
             if time.time() > t_end:
                 t_end = time.time() + 3
-                logging.info('Water level: %.1f ' % self.water_depth)
+                logging.info('Water depth: %.1f ' % self.water_depth)
             time.sleep(1)
 
     def __calculate_water_depth(self):

@@ -56,7 +56,9 @@ class WaterLevel:
         This means that the percent could be over 100% if fountain is overfull
         or it can be negative if its below the EMPTY_DEPTH acceptable for the pump
         """
-        return ((self.water_depth - WaterLevel.EMPTY_DEPTH) / (WaterLevel.FULL_DEPTH - WaterLevel.EMPTY_DEPTH)) * 100
+        rawPercentValue = ((self.water_depth - WaterLevel.EMPTY_DEPTH) / (WaterLevel.FULL_DEPTH - WaterLevel.EMPTY_DEPTH)) * 100
+        return round(rawPercentValue, 1)
+
 
     def get_status(self):
         percent_full = self.get_percent_full()

@@ -7,6 +7,7 @@ import logging
 import http.server
 import socketserver
 import json
+import psutil
 
 fountain = None
 
@@ -51,10 +52,11 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         #logging.info("testvar: %s" % self.server.testvar)
 
+        water_depth = fountain.water_level.get_depth()
+        water_percent_full = fountain.water_level.get_percent_full()
+        water_depth_status = fountain.water_level.get_status()
+
         if self.path == '/':
-            water_depth = fountain.water_level.get_depth()
-            water_percent_full = fountain.water_level.get_percent_full()
-            water_depth_status = fountain.water_level.get_status()
             if water_depth is not None:
                 data = "Water Depth: %.1f<br/>" % water_depth
                 data += "Water Percent Full: %.1f<br/>" % water_percent_full
@@ -73,23 +75,25 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         elif self.path == '/v1':
 
-            water_depth = fountain.water_level.get_water_depth()
-
-                # Create the response
             response = {
-                'water_depth': water_depth,
-                'customer_id': 345,
-                'location_id': 456,
+                "waterLevelPercentFull": water_percent_full,
+                "waterLevelState": water_depth_status.name,
+                "waterTemperature": 61,
+                "fountainTemperature": 83,
+                "rPiTemperature": 92,
+                "waterDepth": water_depth,
+                "cpuPercent": psutil.cpu_percent(),
+                "wifiSignal": 47
             }
 
-            response['note_text'] = "example text"
+            #response['note_text'] = "example text"
 
             data = json.dumps(response)
 
             # Write the response
             self.protocol_version = 'HTTP/1.1'
             self.send_response(200, 'OK')
-            self.send_header('Connection', 'Keep-Alive')
+            #self.send_header('Connection', 'Keep-Alive')
             self.send_header('Content-type', 'application/json')
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()

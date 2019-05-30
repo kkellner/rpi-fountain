@@ -8,15 +8,13 @@ import http.server
 import socketserver
 import json
 
-
-water_level = None
-
+fountain = None
 
 class HttpServer():
 
-    def __init__(self, _water_level):
-        global water_level
-        water_level = _water_level
+    def __init__(self, _fountain):
+        global fountain
+        fountain = _fountain
         PORT = 80
         #Handler = http.server.SimpleHTTPRequestHandler(directory="/")
         #httpd = socketserver.TCPServer(("", PORT), Handler)
@@ -51,7 +49,7 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
         #logging.info("testvar: %s" % self.server.testvar)
 
         if self.path == '/':
-            value = water_level.getWaterDepth()
+            value = fountain.water_level.getWaterDepth()
             if value is not None:
                 data = "Water level: %.1f" % value
             else:
@@ -70,7 +68,7 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
 
                 # Create the response
             response = {
-                'water_level': water_level,
+                'water_level': fountain.water_level,
                 'customer_id': 345,
                 'location_id': 456,
             }

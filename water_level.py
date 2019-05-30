@@ -12,7 +12,7 @@ import melopero_vl53l1x as mp
 class WaterLevel:
     """Handle fountain water level operations"""
 
-    def __init__(self):
+    def __init__(self, fountain):
         self.water_level = None
         self.water_level_sensor = mp.VL53L1X()
         self.water_level_sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)

@@ -14,7 +14,7 @@ from w1thermsensor.errors import W1ThermSensorError, NoSensorFoundError, SensorN
 class Temperature:
     """Handle fountain temperature operations"""
 
-    def __init__(self):
+    def __init__(self, fountain):
 
 
         # TODO: We need to handle case where sensor is not (yet) available

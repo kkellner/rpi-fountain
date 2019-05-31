@@ -79,6 +79,15 @@ def main():
     if os.geteuid() != 0:
         exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
 
+
+    f = open("/proc/net/wireless", "rt")
+    data = f.read()
+    link = int(data[177:179])
+    level = int(data[182:185])
+    noise = int(data[187:192])
+
+    print("Link:{} Level:{} Noise:{}".format(link, level, noise))
+
     fountain = Fountain()
     fountain.startup()
 

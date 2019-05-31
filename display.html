@@ -55,12 +55,19 @@
 
             $.ajax({
                 url: dataUrl
-            }).then(function (data) {
+            }).done(function(data) {
                 fountainData = data;
                 // TODO: Testing
                 //fountainData['waterLevelState'] = 'WATER_LEVEL_UNKNOWN'
                 updateData();
+           })
+            .fail(function(jqxhr, textStatus, errorThrown) {
+                //alert( "error" );
+                console.log("AJAX call HTTP status: "+jqxhr.status+" Error: [" + textStatus + "] : [" + errorThrown + "]")
+                fountainData = {}
+                updateData();
             });
+            
         }
 
         function updateData() {
@@ -174,7 +181,7 @@
                 <th colspan="2">Details</th>
             </tr>
             <tr>
-                <td>Water Level:</td>
+                <td>Water Depth:</td>
                 <td><span id="waterDepth"></span> inches</td>
             </tr>
             <tr>

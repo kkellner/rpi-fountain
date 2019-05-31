@@ -32,7 +32,7 @@ class WaterLevel:
     EMPTY_DEPTH = 5
 
     def __init__(self, fountain):
-        self.water_depth = None
+        self.water_depth = 0.0
 
         self.water_level_sensor = mp.VL53L1X()
         self.water_level_sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)

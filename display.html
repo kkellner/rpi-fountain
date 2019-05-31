@@ -2,9 +2,20 @@
 <html>
 
 <head>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <script type='text/javascript' src='http://code.jquery.com/jquery-1.9.1.js'></script>
     <script type='text/javascript'>//<![CDATA[ 
 
+        // Used to convert "waterLevelState" to color
+        var waterLevelStateToColor = {
+            "WATER_LEVEL_UNKNOWN" : 'blue',
+            "WATER_LEVEL_EMPTY" : 'red',
+            "WATER_LEVEL_CRITICAL" : 'red',
+            "WATER_LEVEL_LOW" : 'yellow',
+            "WATER_LEVEL_OK" : 'green',
+            "WATER_LEVEL_FULL" : 'green',
+        }
         var fountainData = {} /*
             "waterLevelPercentFull": 99,
             "waterLevelState": "OK",
@@ -36,10 +47,18 @@
         }
 
         function getLatestData() {
+            var dataUrl = "/v1"
+            // Enable locally development of html
+            if (window.location.protocol  == "file:") {
+                dataUrl = "http://rpitest.local" + dataUrl
+            }
+
             $.ajax({
-                url: "http://rpitest.local/v1"
+                url: dataUrl
             }).then(function (data) {
                 fountainData = data;
+                // TODO: Testing
+                //fountainData['waterLevelState'] = 'WATER_LEVEL_UNKNOWN'
                 updateData();
             });
         }
@@ -52,14 +71,23 @@
                     element.innerText = fountainData[elementId]
                 }
             }
-            //drawPercentCircle();
+            drawPercentCircle();
+        }
+        
+        function getCircleColor() {
+            var state = fountainData['waterLevelState']
+            var color = waterLevelStateToColor[state]
+            if (color==null) {
+                color = 'gray'
+            }
+            return color
         }
 
         function drawPercentCircle() {
             var canvas1 = document.getElementById("canvas");
             var context = canvas1.getContext("2d");
             context.beginPath();
-            context.fillStyle = "red";
+            context.fillStyle = getCircleColor();
             context.strokeStyle = "black";
             context.lineWidth = 1;
             context.arc((canvas.width / 2), (canvas.height / 2), (canvas.width / 2) / 2, 0, 2 * Math.PI, false);
@@ -76,7 +104,7 @@
             height: 100%;
             margin: 0px;
             border: 0;
-            overflow: hidden;
+            xoverflow: hidden;
             display: block;
             font-size: 2vw;
         }

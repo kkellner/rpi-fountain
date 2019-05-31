@@ -63,6 +63,11 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
             # serve the file!
             self.path = "display.html"
             return http.server.SimpleHTTPRequestHandler.do_GET(self)
+            
+        elif self.path == '/favicon.ico':
+            # serve the file!
+            self.path = "favicon.ico"
+            return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
         elif self.path == '/test':
             if water_depth is not None:
@@ -105,6 +110,11 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(200, 'OK')
             #self.send_header('Connection', 'Keep-Alive')
             self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            self.send_header('Access-Control-Allow-Credentials', 'true')
+            self.send_header('X-Content-Type-Options', 'nosniff')
+
             self.send_header('Content-type', 'application/json')
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()

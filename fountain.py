@@ -20,7 +20,7 @@ from temperature import Temperature
 from water_level import WaterLevel
 from display import Display, Status
 from http_request import HttpServer
-
+from alert_monitor import AlertMonitor
 
 
 
@@ -32,6 +32,7 @@ class Fountain:
         self.display = None
         self.temperature = None
         self.water_level = None
+        self.alert_monitor = None
 
         # Docs: https://docs.python.org/3/library/logging.html
         FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
@@ -58,6 +59,9 @@ class Fountain:
         self.display = Display(self)
         self.water_level = WaterLevel(self)
         self.temperature = Temperature(self)
+        self.alert_monitor = AlertMonitor(self)
+
+        self.alert_monitor.test()
 
         self.display.showStatus(Status.STARTUP, 2)
         #time.sleep(3)

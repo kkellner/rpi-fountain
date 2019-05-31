@@ -10,13 +10,23 @@ import threading
 import melopero_vl53l1x as mp
 from enum import Enum
 
-class WaterStatus(Enum):
-    WATER_LEVEL_UNKNOWN = -1
-    WATER_LEVEL_EMPTY = 0       # Blink Red
-    WATER_LEVEL_CRITICAL = 20   # Red
-    WATER_LEVEL_LOW = 50        # Blink Yellow
-    WATER_LEVEL_OK = 90         # Green
-    WATER_LEVEL_FULL = 100      # Blink Green
+
+class WaterLevelState(Enum):
+
+    FULL = (200, 90)         # Blink Green
+    OK = (95, 40)            # Green
+    LOW = (70, 20)           # Blink Yellow
+    CRITICAL = (25, 5)       # Red
+    EMPTY = (10, -100)        # Blink Red
+    UNKNOWN = (1000, 1000)  # Gray
+
+    # Value check starts at FULL and works it way down
+    # Value must be within high-low range
+    # once state is set, it can't change state until its no
+    # longer in range of current state
+    def __init__(self, high, low):
+        self.high = high
+        self.low = low
 
 
 class WaterLevel:
@@ -32,6 +42,7 @@ class WaterLevel:
     EMPTY_DEPTH = 5
 
     def __init__(self, fountain):
+        self.water_level_state = WaterLevelState.UNKNOWN
         self.water_depth = 0.0
 
         self.water_level_sensor = mp.VL53L1X()
@@ -56,22 +67,33 @@ class WaterLevel:
         This means that the percent could be over 100% if fountain is overfull
         or it can be negative if its below the EMPTY_DEPTH acceptable for the pump
         """
-        rawPercentValue = ((self.water_depth - WaterLevel.EMPTY_DEPTH) / (WaterLevel.FULL_DEPTH - WaterLevel.EMPTY_DEPTH)) * 100
+        rawPercentValue = ((self.water_depth - WaterLevel.EMPTY_DEPTH) /
+                           (WaterLevel.FULL_DEPTH - WaterLevel.EMPTY_DEPTH)) * 100
+
         return round(rawPercentValue, 1)
 
-
-    def get_status(self):
+    def get_state(self):
         percent_full = self.get_percent_full()
-        if percent_full <= WaterStatus.WATER_LEVEL_EMPTY.value:
-            return WaterStatus.WATER_LEVEL_EMPTY
-        elif percent_full <= WaterStatus.WATER_LEVEL_CRITICAL.value:
-            return WaterStatus.WATER_LEVEL_CRITICAL
-        elif percent_full <= WaterStatus.WATER_LEVEL_LOW.value:
-            return WaterStatus.WATER_LEVEL_LOW
-        elif percent_full <= WaterStatus.WATER_LEVEL_OK.value:
-            return WaterStatus.WATER_LEVEL_OK
-        elif percent_full <= WaterStatus.WATER_LEVEL_FULL.value:
-            return WaterStatus.WATER_LEVEL_FULL
+
+        # Check if current state is still correct
+        current_state = self.water_level_state
+        if percent_full <= current_state.high and percent_full >= current_state.low:
+            return current_state
+
+        # Current state is not correct, find current state
+        current_state = None
+        for state in WaterLevelState:
+            print('{:15} = {}'.format(state.name, state.low))
+            if percent_full > state.low:
+                current_state = state
+                break
+        if current_state is None:
+            current_state = WaterLevelState.UNKNOWN
+
+        print('Update current water level state. Old: {} new:{}'.format(
+            self.water_level_state.name, current_state.name))
+        self.water_level_state = current_state
+        return current_state
 
     def monitor_water_level(self):
         t_end = 0

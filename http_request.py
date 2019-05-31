@@ -56,14 +56,14 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         water_depth = fountain.water_level.get_depth()
         water_percent_full = fountain.water_level.get_percent_full()
-        water_depth_status = fountain.water_level.get_status()
+        water_depth_state = fountain.water_level.get_state()
 
 
         if self.path == '/':
             # serve the file!
             self.path = "display.html"
             return http.server.SimpleHTTPRequestHandler.do_GET(self)
-            
+
         elif self.path == '/favicon.ico':
             # serve the file!
             self.path = "favicon.ico"
@@ -73,7 +73,7 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
             if water_depth is not None:
                 data = "Water Depth: %.1f<br/>" % water_depth
                 data += "Water Percent Full: %.1f<br/>" % water_percent_full
-                data += "Water Depth Status: %s<br/>" % water_depth_status
+                data += "Water Depth State: %s<br/>" % water_depth_state
             else:
                 data = "Water sensor not initialized"
 
@@ -90,18 +90,15 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             response = {
                 "waterLevelPercentFull": water_percent_full,
-                "waterLevelState": water_depth_status.name,
+                "waterLevelState": water_depth_state.name,
                 "waterTemperature": 61,
                 "fountainTemperature": 83,
                 "rpiTemperature": 92,
                 "waterDepth": water_depth,
                 "cpuPercent": psutil.cpu_percent(),
                 "wifiSignal": 47,
-                #"rpiTime": time.strftime("%m-%d-%Y %H:%M:%S.%f")
                 "rpiTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
             }
-
-            #response['note_text'] = "example text"
 
             data = json.dumps(response)
 

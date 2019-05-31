@@ -74,7 +74,7 @@ class Display:
         logging.info('In motionHandler channel: %s' % channel)
         self._stop_display_off_timer()
 
-        self.showRealtimeWaterDepthStatus()
+        self.showRealtimeWaterDepthState()
 
         self.display_off_timer = threading.Timer(
             Display.display_auto_off_time_seconds, self.turnOffDisplay)
@@ -107,12 +107,12 @@ class Display:
         self.display_status_thread.daemon = True
         self.display_status_thread.start()
 
-    def showRealtimeWaterDepthStatus(self):
+    def showRealtimeWaterDepthState(self):
 
         self._stop_display_status_thread()
         self.display_status_thread_stop = False
         self.display_status_thread = threading.Thread(
-            target=self._displayRealtimeWaterStatus)
+            target=self._displayRealtimeWaterState)
         self.display_status_thread.daemon = True
         self.display_status_thread.start()
 
@@ -136,15 +136,15 @@ class Display:
 
         self.turnOffDisplay()
 
-    def _displayRealtimeWaterStatus(self):
+    def _displayRealtimeWaterState(self):
 
-        previous_water_depth_status = None
+        previous_water_depth_state = None
         while not self.display_status_thread_stop:
-            water_depth_status = self.fountain.water_level.get_status()
-            if water_depth_status is not previous_water_depth_status:
-                logging.info("water_depth_status: %s" % water_depth_status)
-                previous_water_depth_status = water_depth_status
-            displayStatus = Status[water_depth_status.name]
+            water_depth_state = self.fountain.water_level.get_state()
+            if water_depth_state is not previous_water_depth_state:
+                logging.info("water_depth_state: %s" % water_depth_state)
+                previous_water_depth_state = water_depth_state
+            displayStatus = Status[water_depth_state.name]
             sequenceMethod = getattr(self, '_' + displayStatus.name + '_Sequence')
             sequenceMethod()
 

@@ -65,7 +65,7 @@ class WaterLevel:
         return self.water_depth
 
     def __set_depth(self, water_depth):
-        self.water_depth = water_depth
+        self.water_depth = round(water_depth, 1)
         self.__refresh_state()
 
     def get_percent_full(self):

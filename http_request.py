@@ -126,16 +126,20 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
         water_percent_full = self.fountain.water_level.get_percent_full()
         water_depth_state = self.fountain.water_level.get_state()
 
+        rpiInfo = self.fountain.rpi_info.get_info()
+
+        self.fountain.temperature.water_temperature
+
         response = {
                 "waterLevelPercentFull": water_percent_full,
                 "waterLevelState": water_depth_state.name,
-                "waterTemperature": 61,
-                "fountainTemperature": 83,
-                "rpiTemperature": 92,
+                "waterTemperature": self.fountain.temperature.water_temperature,
+                "fountainTemperature": self.fountain.temperature.fountain_temperature,
+                "circuitTemperature": self.fountain.temperature.circuit_temperature,
                 "waterDepth": water_depth,
                 "cpuPercent": psutil.cpu_percent(),
-                "wifiSignal": 47,
-                "rpiTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+                "rpiTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+                "rpiInfo": rpiInfo
             }
 
         data = json.dumps(response)

@@ -3,6 +3,7 @@
 import subprocess
 import re
 import logging
+import time
 
 logger = logging.getLogger('display')
 
@@ -11,9 +12,15 @@ class RpiInfo:
 
     def __init__(self, fountain):
         self.dataMap = {}
+        self.lastUpdate = None
 
     def get_info(self):
-        self.update()
+        now = time.time()
+        if self.lastUpdate is None or now > self.lastUpdate + 1:
+            # Only update every n seconds
+            self.lastUpdate = now
+            self.update()
+
         return self.dataMap
 
     def update(self):

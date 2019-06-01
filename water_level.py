@@ -11,6 +11,8 @@ import melopero_vl53l1x as mp
 from enum import Enum
 
 
+logger = logging.getLogger('water_level')
+
 class WaterLevelState(Enum):
 
     FULL = (200, 90)         # Blink Green
@@ -44,22 +46,27 @@ class WaterLevel:
     def __init__(self, fountain):
         self.water_level_state = WaterLevelState.UNKNOWN
         self.water_depth = 0.0
+        self.state_change_notify_list = []
 
         self.water_level_sensor = mp.VL53L1X()
         self.water_level_sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)
         value_mm = self.water_level_sensor.get_measurement()
         if value_mm != -1:
-            logging.info(
+            logger.info(
                 "water level sensor initialized. Value: %s" % value_mm)
             monitor_water_level_thread = threading.Thread(
-                target=self.monitor_water_level)
+                target=self.__monitor_water_level)
             monitor_water_level_thread.daemon = True
             monitor_water_level_thread.start()
         else:
-            logging.error("water level sensor initialize error")
+            logger.error("water level sensor initialize error")
 
     def get_depth(self):
         return self.water_depth
+
+    def __set_depth(self, water_depth):
+        self.water_depth = water_depth
+        self.__refresh_state()
 
     def get_percent_full(self):
         """
@@ -71,38 +78,52 @@ class WaterLevel:
                            (WaterLevel.FULL_DEPTH - WaterLevel.EMPTY_DEPTH)) * 100
 
         return round(rawPercentValue, 1)
-
-    def get_state(self):
+    
+    def __refresh_state(self):
+        """
+        This method should be called upon every update of self.water_depth
+        """
         percent_full = self.get_percent_full()
-
         # Check if current state is still correct
         current_state = self.water_level_state
         if percent_full <= current_state.high and percent_full >= current_state.low:
-            return current_state
+            # No state change
+            return 
 
         # Current state is not correct, find current state
         current_state = None
         for state in WaterLevelState:
-            print('{:15} = {}'.format(state.name, state.low))
+            # print('{:15} = {}'.format(state.name, state.low))
             if percent_full > state.low:
                 current_state = state
                 break
         if current_state is None:
             current_state = WaterLevelState.UNKNOWN
 
-        print('Update current water level state. Old: {} new:{}'.format(
+        logger.info('Update current water level state. Old: {} new:{}'.format(
             self.water_level_state.name, current_state.name))
+        old_state = self.water_level_state
         self.water_level_state = current_state
-        return current_state
+        self.__notify_state_change(old_state, current_state)
+        
+    def get_state(self):
+        return self.water_level_state
 
-    def monitor_water_level(self):
+    def add_state_change_notify(self, callback):
+        self.state_change_notify_list.append(callback)
+
+    def __notify_state_change(self, oldState, newState):
+        for notifyCallback in self.state_change_notify_list:
+            notifyCallback(self, oldState, newState)
+
+    def __monitor_water_level(self):
         t_end = 0
         while True:
-            self.water_depth = self.__calculate_water_depth()
+            self.__set_depth(self.__calculate_water_depth())
             # Only print the water level every 3 seconds
             if time.time() > t_end:
                 t_end = time.time() + 3
-                logging.info('Water depth: %.1f ' % self.water_depth)
+                logger.debug('Water depth: %.1f ' % self.water_depth)
             time.sleep(1)
 
     def __calculate_water_depth(self):
@@ -121,6 +142,5 @@ class WaterLevel:
             list.append(value_mm)
         list.sort()
         middle_value_mm = list[int(samples/2)]
-        # print('values: ', list)
         value_inches = (1/25.4) * middle_value_mm
         return value_inches

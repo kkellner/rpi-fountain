@@ -20,9 +20,9 @@ from temperature import Temperature
 from water_level import WaterLevel
 from display import Display, Status
 from http_request import HttpServer
-from alert_monitor import AlertMonitor
+from notification import Notification
 
-
+logger = logging.getLogger('fountain')
 
 class Fountain:
     """Handle fountain display operations"""
@@ -32,9 +32,10 @@ class Fountain:
         self.display = None
         self.temperature = None
         self.water_level = None
-        self.alert_monitor = None
+        self.notification = None
 
         # Docs: https://docs.python.org/3/library/logging.html
+        # Docs on config: https://docs.python.org/3/library/logging.config.html
         FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
         logging.basicConfig(level=logging.NOTSET, format=FORMAT)
 
@@ -45,7 +46,7 @@ class Fountain:
 
 
     def signal_handler(self, signal, frame):
-        logging.info('Shutdown...')
+        logger.info('Shutdown...')
         if self.server is not None:
             self.server.shutdown()
         if self.display is not None:
@@ -55,21 +56,13 @@ class Fountain:
         sys.exit(0)
 
     def startup(self):
-        logging.info('Startup...')
+        logger.info('Startup...')
         self.display = Display(self)
         self.water_level = WaterLevel(self)
         self.temperature = Temperature(self)
-        self.alert_monitor = AlertMonitor(self)
-
-        self.alert_monitor.test()
+        self.notification = Notification(self)
 
         self.display.showStatus(Status.STARTUP, 2)
-        #time.sleep(3)
-        #self.display.showStatus(Status.WATER_LEVEL_OK, 2)
-        #time.sleep(3)
-        #display.showStatus(Status.WATER_LEVEL_LOW, 2)
-        #time.sleep(3)
-        #display.showStatus(Status.WATER_LEVEL_CRITICAL, 2)
 
         self.server = HttpServer(self)
         # the following is a blocking call

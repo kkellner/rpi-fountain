@@ -11,6 +11,7 @@ import RPi.GPIO as GPIO
 import neopixel
 from enum import Enum
 
+logger = logging.getLogger('display')
 
 class Status(Enum):
     NONE = 0
@@ -47,7 +48,7 @@ class Display:
     # The number of NeoPixels
     num_pixels = 2
 
-    display_auto_off_time_seconds = 3
+    display_auto_off_time_seconds = 60
 
     def __init__(self, fountain):
         self.fountain = fountain
@@ -71,7 +72,7 @@ class Display:
         self.turnOffDisplay()
 
     def motionHandler(self, channel):
-        logging.info('In motionHandler channel: %s' % channel)
+        logger.info('In motionHandler channel: %s' % channel)
         self._stop_display_off_timer()
 
         self.showRealtimeWaterDepthState()
@@ -87,7 +88,7 @@ class Display:
         self.display_off_timer = None
 
     def turnOffDisplay(self):
-        logging.info('In turnOffDisplay')
+        logger.info('In turnOffDisplay')
         self._stop_display_off_timer()
         self._stop_display_status_thread()
         self.pixels.fill((0, 0, 0))
@@ -96,7 +97,7 @@ class Display:
     def showStatus(self, status: Status, showForSeconds=2):
 
         self.status = status
-        logging.info('Set display status: %s' % status)
+        logger.info('Set display status: %s' % status)
 
         self._stop_display_status_thread()
 
@@ -121,11 +122,11 @@ class Display:
         if self.display_status_thread is threading.current_thread():
             return
         if self.display_status_thread is not None:
-            logging.info('Stop thread request')
+            logger.info('Stop thread request')
             self.display_status_thread_stop = True
             self.display_status_thread.join()
             self.display_status_thread = None
-            logging.info('Stop thread complete')
+            logger.info('Stop thread complete')
 
     def _displayStatus(self, showForSeconds):
 
@@ -142,9 +143,9 @@ class Display:
         while not self.display_status_thread_stop:
             water_depth_state = self.fountain.water_level.get_state()
             if water_depth_state is not previous_water_depth_state:
-                logging.info("water_depth_state: %s" % water_depth_state)
+                logger.info("water_depth_state: %s" % water_depth_state)
                 previous_water_depth_state = water_depth_state
-            displayStatus = Status[water_depth_state.name]
+            displayStatus = Status["WATER_LEVEL_" + water_depth_state.name]
             sequenceMethod = getattr(self, '_' + displayStatus.name + '_Sequence')
             sequenceMethod()
 

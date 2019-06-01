@@ -10,12 +10,13 @@ import threading
 from w1thermsensor import W1ThermSensor
 from w1thermsensor.errors import W1ThermSensorError, NoSensorFoundError, SensorNotReadyError
 
+logger = logging.getLogger('temperature')
+
 
 class Temperature:
     """Handle fountain temperature operations"""
 
     def __init__(self, fountain):
-
 
         # TODO: We need to handle case where sensor is not (yet) available
         try:
@@ -32,7 +33,7 @@ class Temperature:
             monitor_temperature_thread.start()
 
         except NoSensorFoundError as e:
-            logging.error(
+            logger.error(
                 "Unable to initialize all temperature sensors. Error: " + str(e))
 
 
@@ -41,11 +42,7 @@ class Temperature:
             wTemp = self.water_temperature.get_temperature(W1ThermSensor.DEGREES_F)
             fTemp = self.fountain_temperature.get_temperature(W1ThermSensor.DEGREES_F)
             cTemp = self.circuit_temperature.get_temperature(W1ThermSensor.DEGREES_F)
-            logging.info(
+            logger.debug(
                 'Temperatures Water: %3.1f Fountain: %3.1f circuit: %3.1f', wTemp, fTemp, cTemp)
             time.sleep(6)
-
-
-    def myfunc(self):
-        logging.info("hello from myfunc")
 

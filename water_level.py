@@ -9,9 +9,12 @@ import time
 import threading
 import melopero_vl53l1x as mp
 from enum import Enum
-import statistics 
+import statistics
+import schedule
 
 logger = logging.getLogger('water_level')
+fountain_data = logging.getLogger('fountain_data')
+
 
 class WaterLevelState(Enum):
 
@@ -49,7 +52,7 @@ class WaterLevel:
         self.state_change_notify_list = []
 
         self.water_level_sensor = mp.VL53L1X()
-        self.water_level_sensor.setROI(6, 11, 10, 7) 
+        self.water_level_sensor.setROI(6, 11, 10, 7)
         self.water_level_sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)
         value_mm = self.water_level_sensor.get_measurement()
         if value_mm != -1:
@@ -61,6 +64,21 @@ class WaterLevel:
                 target=self.__monitor_water_level)
             monitor_water_level_thread.daemon = True
             monitor_water_level_thread.start()
+
+            # Docs: https://schedule.readthedocs.io/en/stable/
+            # DOcs: https://github.com/dbader/schedule
+            schedule.every().minute.at(":00").do(self.__log_data)
+
+            #schedule.every().minute.do(self.__log_data)
+            # schedule.every().hour.do(job)
+            # schedule.every().day.at("10:30").do(job)
+            # schedule.every(5).to(10).minutes.do(job)
+            # schedule.every().monday.do(job)
+            # schedule.every().wednesday.at("13:15").do(job)
+            # schedule.every().minute.at(":17").do(job)
+
+            self.__start_schedule_thread()
+
         else:
             logger.error("water level sensor initialize error")
 
@@ -81,7 +99,7 @@ class WaterLevel:
                            (WaterLevel.FULL_DEPTH - WaterLevel.EMPTY_DEPTH)) * 100
 
         return round(rawPercentValue, 0)
-    
+
     def __refresh_state(self):
         """
         This method should be called upon every update of self.water_depth
@@ -91,7 +109,7 @@ class WaterLevel:
         current_state = self.water_level_state
         if percent_full <= current_state.high and percent_full >= current_state.low:
             # No state change
-            return 
+            return
 
         # Current state is not correct, find current state
         current_state = None
@@ -108,7 +126,7 @@ class WaterLevel:
         old_state = self.water_level_state
         self.water_level_state = current_state
         self.__notify_state_change(old_state, current_state)
-        
+
     def get_state(self):
         return self.water_level_state
 
@@ -118,6 +136,22 @@ class WaterLevel:
     def __notify_state_change(self, oldState, newState):
         for notifyCallback in self.state_change_notify_list:
             notifyCallback(self, oldState, newState)
+
+    def __start_schedule_thread(self):
+        logging_thread = threading.Thread(
+            target=self.__schedule_thread)
+        logging_thread.daemon = True
+        logging_thread.start()
+
+    def __schedule_thread(self):
+        while True:
+            #self.__log_data()
+            schedule.run_pending()
+            time.sleep(1)
+
+    def __log_data(self):
+        fountain_data.info('Water depth: %.2f  Percent: %.0f' % (self.water_depth, self.get_percent_full() ))
+
 
     def __monitor_water_level(self):
         t_end = 0
@@ -144,12 +178,12 @@ class WaterLevel:
             value_mm = self.water_level_sensor.get_measurement()
             list.append(value_mm)
             time.sleep(0.01)
-        #list.sort()
+        # list.sort()
         #middle_value_mm = list[int(samples/2)]
         #mean = round(statistics.mean(list),1)
         #mode = statistics.mode(list)
         middle_value_mm = statistics.median(list)
 
-        logger.debug("Water: " + str(list)+ " middle:" + str(middle_value_mm) )
+        logger.debug("Water: " + str(list) + " middle:" + str(middle_value_mm))
         value_inches = (1/25.4) * middle_value_mm
         return value_inches

@@ -37,18 +37,23 @@ class WaterLevelState(Enum):
 class WaterLevel:
     """Handle fountain water level operations"""
 
+    MM_PER_INCH = 0.0393701
+
     # Distance between top of IR sensor and bottom of tube (in inches)
-    TOTAL_DISTANCE_TO_BOTTOM = 16.3
+    TOTAL_DISTANCE_TO_BOTTOM_MM = 414
+    TOTAL_DISTANCE_TO_BOTTOM_INCHES = TOTAL_DISTANCE_TO_BOTTOM_MM * MM_PER_INCH
 
     # The depth of water in which the fountain is considered to be full
-    FULL_DEPTH = 11.0
+    FULL_DEPTH_MM = 280
+    FULL_DEPTH_INCHES = FULL_DEPTH_MM * MM_PER_INCH
 
     # The depth of water which no longer allows the pump to work
-    EMPTY_DEPTH = 4.5
+    EMPTY_DEPTH_MM = 114
+    EMPTY_DEPTH_INCHES = EMPTY_DEPTH_MM * MM_PER_INCH
 
     def __init__(self, fountain):
         self.water_level_state = WaterLevelState.UNKNOWN
-        self.water_depth = 0.0
+        self.water_depth_mm = 0
         self.state_change_notify_list = []
 
         self.water_level_sensor = mp.VL53L1X()
@@ -59,7 +64,7 @@ class WaterLevel:
             logger.info(
                 "water level sensor initialized. Value: %s" % value_mm)
             # Update the depth first-time before we complete initalization
-            self.__set_depth(self.__calculate_water_depth())
+            self.__set_depth_mm(self.__calculate_water_depth_mm())
             monitor_water_level_thread = threading.Thread(
                 target=self.__monitor_water_level)
             monitor_water_level_thread.daemon = True
@@ -69,7 +74,7 @@ class WaterLevel:
             # DOcs: https://github.com/dbader/schedule
             schedule.every().minute.at(":00").do(self.__log_data)
 
-            #schedule.every().minute.do(self.__log_data)
+            # schedule.every().minute.do(self.__log_data)
             # schedule.every().hour.do(job)
             # schedule.every().day.at("10:30").do(job)
             # schedule.every(5).to(10).minutes.do(job)
@@ -82,12 +87,26 @@ class WaterLevel:
         else:
             logger.error("water level sensor initialize error")
 
-    def get_depth(self):
-        return round(self.water_depth, 1)
+    def get_depth_mm(self):
+        return round(self.water_depth_mm, 1)
 
-    def __set_depth(self, water_depth):
-        self.water_depth = water_depth
-        self.__refresh_state()
+    def get_depth_inches(self):
+        value_inches = (1/25.4) * self.water_depth_mm
+        return round(value_inches, 1)
+
+    def __set_depth_mm(self, water_depth_mm):
+        # We only want to adjust the saved depth if its more then 1mm from current
+        if self.water_depth_mm == water_depth_mm:
+            # No change - do nothing
+            return
+        elif abs(self.water_depth_mm - water_depth_mm) > 1:
+            logger.debug("*** More then 1mm change of depth.  Old: %.f  New: %.f" %
+                         (self.water_depth_mm, water_depth_mm))
+            self.water_depth_mm = water_depth_mm
+            self.__refresh_state()
+        else:
+            logger.debug("*** Ignore water_depth_mm change because less then 2mm  Old: %.f  New: %.f" %
+                         (self.water_depth_mm, water_depth_mm))
 
     def get_percent_full(self):
         """
@@ -95,14 +114,14 @@ class WaterLevel:
         This means that the percent could be over 100% if fountain is overfull
         or it can be negative if its below the EMPTY_DEPTH acceptable for the pump
         """
-        rawPercentValue = ((self.water_depth - WaterLevel.EMPTY_DEPTH) /
-                           (WaterLevel.FULL_DEPTH - WaterLevel.EMPTY_DEPTH)) * 100
+        rawPercentValue = ((self.water_depth_mm - WaterLevel.EMPTY_DEPTH_MM) /
+                           (WaterLevel.FULL_DEPTH_MM - WaterLevel.EMPTY_DEPTH_MM)) * 100
 
         return round(rawPercentValue, 0)
 
     def __refresh_state(self):
         """
-        This method should be called upon every update of self.water_depth
+        This method should be called upon every update of self.water_depth_mm
         """
         percent_full = self.get_percent_full()
         # Check if current state is still correct
@@ -145,33 +164,33 @@ class WaterLevel:
 
     def __schedule_thread(self):
         while True:
-            #self.__log_data()
+            # self.__log_data()
             schedule.run_pending()
             time.sleep(1)
 
     def __log_data(self):
-        fountain_data.info('Water depth: %.2f  Percent: %.0f' % (self.water_depth, self.get_percent_full() ))
-
+        fountain_data.info('Water depth: %.2f mm  Percent: %.0f' % (
+            self.water_depth_mm, self.get_percent_full()))
 
     def __monitor_water_level(self):
         t_end = 0
         while True:
-            self.__set_depth(self.__calculate_water_depth())
+            self.__set_depth_mm(self.__calculate_water_depth_mm())
             # Only print the water level every 3 seconds
             if time.time() > t_end:
                 t_end = time.time() + 3
-                logger.debug('Water depth: %.1f ' % self.water_depth)
+                logger.debug('Water depth: %.1f mm' % self.water_depth_mm)
             time.sleep(1)
 
-    def __calculate_water_depth(self):
-        distance_to_water = self.__measure_water_distance()
-        depth = WaterLevel.TOTAL_DISTANCE_TO_BOTTOM - distance_to_water
+    def __calculate_water_depth_mm(self):
+        distance_to_water = self.__measure_water_distance_mm()
+        depth = WaterLevel.TOTAL_DISTANCE_TO_BOTTOM_MM - distance_to_water
         # The sensor is off a bit when dry. Make sure we don't have negative depth
         if depth < 0:
             depth = 0
         return depth
 
-    def __measure_water_distance(self):
+    def __measure_water_distance_mm(self):
         list = []
         samples = 15
         for x in range(samples):
@@ -185,5 +204,5 @@ class WaterLevel:
         middle_value_mm = statistics.median(list)
 
         logger.debug("Water: " + str(list) + " middle:" + str(middle_value_mm))
-        value_inches = (1/25.4) * middle_value_mm
-        return value_inches
+        #value_inches = (1/25.4) * middle_value_mm
+        return middle_value_mm

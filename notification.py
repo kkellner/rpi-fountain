@@ -57,7 +57,7 @@ class Notification:
             return
 
         waterPercentFull = self.fountain.water_level.get_percent_full()
-        waterDepth = self.fountain.water_level.get_depth()
+        waterDepthInches = self.fountain.water_level.get_depth_inches()
 
         subject = "Fountain Notify - Water Level State: " + str(newState.name)
         bodyTemplate = """\
@@ -79,7 +79,7 @@ class Notification:
         """
 
         bodyHtml = bodyTemplate % (
-            newState.name, waterPercentFull, waterDepth, oldState.name)
+            newState.name, waterPercentFull, waterDepthInches, oldState.name)
 
         self.send_email(subject, bodyHtml)
 

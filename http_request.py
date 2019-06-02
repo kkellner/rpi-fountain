@@ -96,9 +96,6 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def get_display(self):
-        water_depth = self.fountain.water_level.get_depth()
-        water_percent_full = self.fountain.water_level.get_percent_full()
-        water_depth_state = self.fountain.water_level.get_state()
         # serve the file!
         self.path = "display.html"
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
@@ -109,11 +106,11 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
     def get_test(self):
-        water_depth = self.fountain.water_level.get_depth()
+        water_depth_inches = self.fountain.water_level.get_depth_inches()
         water_percent_full = self.fountain.water_level.get_percent_full()
         water_depth_state = self.fountain.water_level.get_state()
-        if water_depth is not None:
-            data = "Water Depth: %.1f<br/>" % water_depth
+        if water_depth_inches is not None:
+            data = "Water Depth: %.1f inches<br/>" % water_depth_inches
             data += "Water Percent Full: %.1f<br/>" % water_percent_full
             data += "Water Depth State: %s<br/>" % water_depth_state
         else:
@@ -129,7 +126,8 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
         return
 
     def get_v1_data(self):
-        water_depth = self.fountain.water_level.get_depth()
+        water_depth_mm = self.fountain.water_level.get_depth_mm()
+        water_depth_inches = self.fountain.water_level.get_depth_inches()
         water_percent_full = self.fountain.water_level.get_percent_full()
         water_depth_state = self.fountain.water_level.get_state()
 
@@ -143,7 +141,9 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "waterTemperature": self.fountain.temperature.water_temperature,
                 "fountainTemperature": self.fountain.temperature.fountain_temperature,
                 "circuitTemperature": self.fountain.temperature.circuit_temperature,
-                "waterDepth": water_depth,
+                "waterDepth": water_depth_inches,
+                "waterDepth_inches": water_depth_inches,
+                "waterDepth_mm": water_depth_mm,
                 "cpuPercent": psutil.cpu_percent(),
                 "rpiTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
                 "rpiInfo": rpiInfo

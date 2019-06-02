@@ -9,7 +9,7 @@ import time
 import threading
 import melopero_vl53l1x as mp
 from enum import Enum
-
+import statistics 
 
 logger = logging.getLogger('water_level')
 
@@ -19,8 +19,8 @@ class WaterLevelState(Enum):
     OK = (95, 40)            # Green
     LOW = (70, 20)           # Blink Yellow
     CRITICAL = (25, 5)       # Red
-    EMPTY = (10, -100)        # Blink Red
-    UNKNOWN = (1000, 1000)  # Gray
+    EMPTY = (10, -100)       # Blink Red
+    UNKNOWN = (1000, 1000)   # Gray
 
     # Value check starts at FULL and works it way down
     # Value must be within high-low range
@@ -38,10 +38,10 @@ class WaterLevel:
     TOTAL_DISTANCE_TO_BOTTOM = 16.3
 
     # The depth of water in which the fountain is considered to be full
-    FULL_DEPTH = 11
+    FULL_DEPTH = 11.0
 
     # The depth of water which no longer allows the pump to work
-    EMPTY_DEPTH = 5
+    EMPTY_DEPTH = 4.5
 
     def __init__(self, fountain):
         self.water_level_state = WaterLevelState.UNKNOWN
@@ -49,11 +49,14 @@ class WaterLevel:
         self.state_change_notify_list = []
 
         self.water_level_sensor = mp.VL53L1X()
+        self.water_level_sensor.setROI(6, 11, 10, 7) 
         self.water_level_sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)
         value_mm = self.water_level_sensor.get_measurement()
         if value_mm != -1:
             logger.info(
                 "water level sensor initialized. Value: %s" % value_mm)
+            # Update the depth first-time before we complete initalization
+            self.__set_depth(self.__calculate_water_depth())
             monitor_water_level_thread = threading.Thread(
                 target=self.__monitor_water_level)
             monitor_water_level_thread.daemon = True
@@ -62,10 +65,10 @@ class WaterLevel:
             logger.error("water level sensor initialize error")
 
     def get_depth(self):
-        return self.water_depth
+        return round(self.water_depth, 1)
 
     def __set_depth(self, water_depth):
-        self.water_depth = round(water_depth, 1)
+        self.water_depth = water_depth
         self.__refresh_state()
 
     def get_percent_full(self):
@@ -77,7 +80,7 @@ class WaterLevel:
         rawPercentValue = ((self.water_depth - WaterLevel.EMPTY_DEPTH) /
                            (WaterLevel.FULL_DEPTH - WaterLevel.EMPTY_DEPTH)) * 100
 
-        return round(rawPercentValue, 1)
+        return round(rawPercentValue, 0)
     
     def __refresh_state(self):
         """
@@ -136,11 +139,17 @@ class WaterLevel:
 
     def __measure_water_distance(self):
         list = []
-        samples = 3
+        samples = 15
         for x in range(samples):
             value_mm = self.water_level_sensor.get_measurement()
             list.append(value_mm)
-        list.sort()
-        middle_value_mm = list[int(samples/2)]
+            time.sleep(0.01)
+        #list.sort()
+        #middle_value_mm = list[int(samples/2)]
+        #mean = round(statistics.mean(list),1)
+        #mode = statistics.mode(list)
+        middle_value_mm = statistics.median(list)
+
+        logger.debug("Water: " + str(list)+ " middle:" + str(middle_value_mm) )
         value_inches = (1/25.4) * middle_value_mm
         return value_inches

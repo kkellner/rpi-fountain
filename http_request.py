@@ -30,7 +30,7 @@ class HttpServer():
         endpointsGET = { 
             "/": "display",
             "/favicon.ico": "favicon",
-            "/v1": "v1_data",
+            "/v1/data": "v1_data",
             "/test": "test"
             }
 
@@ -73,20 +73,27 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
         logger.debug(format % args)
 
     def do_GET(self):
-        handlerMethodName = "get_" + self.endpointsGET[self.path]
-        handlerMethod = getattr(self, handlerMethodName)
-        result = handlerMethod()
-        return result
+        pathOnly = self.path.split('?')[0]
+        methodSuffix = self.endpointsGET.get(pathOnly, None)
+        if methodSuffix is not None:
+            handlerMethodName = "get_" + methodSuffix
+            handlerMethod = getattr(self, handlerMethodName)
+            result = handlerMethod()
+            return result
+        else:
+            self.send_response(404)
+            self.addCORSHeaders()
+            self.end_headers()            
 
-    def do_POST(s):
+    def do_POST(self):
         print('-----------------------')
-        print('POST %s (from client %s)' % (s.path, s.client_address))
-        print(s.headers)
-        content_length = int(s.headers['Content-Length'])
-        post_data = json.loads(s.rfile.read(content_length))
+        print('POST %s (from client %s)' % (self.path, self.client_address))
+        print(self.headers)
+        content_length = int(self.headers['Content-Length'])
+        post_data = json.loads(self.rfile.read(content_length))
         print(json.dumps(post_data, indent=4, sort_keys=True))
-        s.send_response(200)
-        s.end_headers()
+        self.send_response(200)
+        self.end_headers()
 
     def get_display(self):
         water_depth = self.fountain.water_level.get_depth()
@@ -148,18 +155,21 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.protocol_version = 'HTTP/1.1'
         self.send_response(200, 'OK')
         self.send_header('Connection', 'Keep-Alive')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods',
-                            'GET,PUT,POST,DELETE')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.send_header('Access-Control-Allow-Credentials', 'true')
-        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.addCORSHeaders()
 
         self.send_header('Content-type', 'application/json')
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(bytes(data, 'utf-8'))
         return
+
+    def addCORSHeaders(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods',
+                            'GET,PUT,POST,DELETE')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Credentials', 'true')
+        self.send_header('X-Content-Type-Options', 'nosniff')
 
 # Source of below code: http://code.activestate.com/recipes/574454-thread-pool-mixin-class-for-use-with-socketservert/
 class ThreadPoolMixIn(socketserver.ThreadingMixIn):

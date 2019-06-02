@@ -34,19 +34,21 @@
         */
 
         function autoRefresh() {
-            getLatestData();
+            getLatestData(false);
             setTimeout(autoRefresh, 1000);
         }
 
-        function getLatestData() {
-            var dataUrl = "/v1";
+        function getLatestData(async) {
+            var dataUrl = "/v1/data";
             // Enable locally development of html
             if (window.location.protocol == "file:") {
                 dataUrl = "http://rpitest.local" + dataUrl;
             }
 
             $.ajax({
-                url: dataUrl
+                url: dataUrl,
+                async: async,
+                timeout: 15000
             })
                 .done(function (data) {
                     fountainData = data;
@@ -56,7 +58,7 @@
                 })
                 .fail(function (jqxhr, textStatus, errorThrown) {
                     console.log("AJAX call HTTP status: " + jqxhr.status + " Error: [" + textStatus + "] : [" + errorThrown + "]");
-                    fountainData = {};
+                    fountainData = { };
                     updateData();
                 });
 
@@ -72,20 +74,26 @@
             }
             var element = null
 
-            updateField('wifiSignal', 'signal')
-            updateField('rxbitrate', 'rx bitrate')
-            updateField('txbitrate', 'tx bitrate')
-            updateField('freq', 'freq')
-            updateField('RX', 'RX')
-            updateField('TX', 'TX')
-            updateField('connectedtime', 'connected time')
+            rpiInfo = fountainData['rpiInfo']
+            if (rpiInfo != null) {
+                updateField('wifiSignal', 'signal')
+                updateField('rxbitrate', 'rx bitrate')
+                updateField('txbitrate', 'tx bitrate')
+                updateField('freq', 'freq')
+                updateField('RX', 'RX')
+                updateField('TX', 'TX')
+                updateField('connectedtime', 'connected time')
+            }
 
             drawPercentCircle();
         }
 
         function updateField(elementName, jsonFieldName) {
             element = document.getElementById(elementName);
-            element.innerText = fountainData['rpiInfo'][jsonFieldName]
+            rpiInfo = fountainData['rpiInfo']
+            if (rpiInfo != null) {
+                element.innerText = fountainData['rpiInfo'][jsonFieldName]
+            }
         }
 
         function getCircleColor() {
@@ -169,7 +177,7 @@
     <div id="container">
         <div class="center">
             <canvas id="canvas"></canvas><br />
-            <div id="overlay"><span id="waterLevelPercentFull"></span>%</div>
+            <div id="overlay"><span id="waterLevelPercentFull">---</span>%</div>
         </div>
         <table>
             <tr>

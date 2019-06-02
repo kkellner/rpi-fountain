@@ -48,7 +48,7 @@ class Notification:
                      " oldState:" + str(oldState) +
                      " newState:"+str(newState) +
                      " waterLevelPct:" + str(waterLevel.get_percent_full()))
-        self.send_water_level_state_change_email(oldState, newState)
+        #self.send_water_level_state_change_email(oldState, newState)
 
     def send_water_level_state_change_email(self, oldState, newState):
 

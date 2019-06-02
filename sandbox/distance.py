@@ -13,25 +13,33 @@ sensor = mp.VL53L1X()
 
 #sensor.start_ranging(mp.VL53L1X.MEDIUM_DST_MODE)
 #sensor.start_ranging(mp.VL53L1X.LONG_DST_MODE)
+
+sensor.setROI(6, 11, 10, 7)  # 177 - 181  (4 variance)
+#sensor.setROI(7, 11, 11, 7)   # 183 - 187  (4 variance)
+#sensor.setROI(6, 11, 9, 7)    #  174 - 178   (4 variance)
+#sensor.setROI(0, 15, 15, 0)  #  190 - 196mm (6 variance)
+
 sensor.start_ranging(mp.VL53L1X.SHORT_DST_MODE)
 print('start water depth check')
 
 def getWaterDepth(center=False):
 
-    if center == True: 
-        sensor.setROI(6, 11, 9, 7)
-    else:
-        sensor.setROI(0, 15, 15, 0)
+    # if center == True: 
+    #     sensor.setROI(6, 11, 9, 7)
+    # else:
+    #     sensor.setROI(0, 15, 15, 0)
     list = [ ]
-    samples=5
+    samples=1
     for x in range(samples):
        value_mm = sensor.get_measurement()
        list.append(value_mm)
     list.sort()
     middle_value_mm = list[int(samples/2)]
+    return middle_value_mm
     #print('values: ', list)
-    value_inches = (1/25.4) * middle_value_mm
-    return value_inches
+    #value_inches = (1/25.4) * middle_value_mm
+    #return value_inches
+
     #print('%.1f inches' % (value_inches), end="")
     #sensor.setROI(6, 11, 9, 7)
     #value_mm = sensor.get_measurement()

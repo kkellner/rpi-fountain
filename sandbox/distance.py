@@ -3,6 +3,7 @@
 import time
 
 import melopero_vl53l1x as mp
+import statistics
 
 sensor = mp.VL53L1X()
 #sensor = mp.VL53L1X(i2c_bus=1, i2c_address=0x29)
@@ -29,12 +30,13 @@ def getWaterDepth(center=False):
     # else:
     #     sensor.setROI(0, 15, 15, 0)
     list = [ ]
-    samples=1
+    samples=15
     for x in range(samples):
        value_mm = sensor.get_measurement()
        list.append(value_mm)
-    list.sort()
-    middle_value_mm = list[int(samples/2)]
+       time.sleep(0.01)
+
+    middle_value_mm = statistics.median(list)
     return middle_value_mm
     #print('values: ', list)
     #value_inches = (1/25.4) * middle_value_mm

@@ -43,6 +43,8 @@ class Fountain:
         FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
         logging.basicConfig(level=logging.NOTSET, format=FORMAT)
         self.__setup_logger("fountain_data", "/var/log/fountain_data.log")
+        self.__setup_logger("fountain_water_state_change", "/var/log/fountain_water_state_change.log")
+        self.__setup_logger("display_motion", "/var/log/fountain_display_motion.log")
 
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
@@ -57,14 +59,10 @@ class Fountain:
         fileHandler = logging.handlers.RotatingFileHandler(log_file, mode='a',
                                                            maxBytes=1000000, backupCount=2)
         fileHandler.setFormatter(formatter)
-        # streamHandler = logging.StreamHandler()
-        # streamHandler.setFormatter(formatter)
-
         l.setLevel(level)
         l.addHandler(fileHandler)
         l.propagate = False
-        # l.addHandler(streamHandler)
-
+  
     def signal_handler(self, signal, frame):
         logger.info('Shutdown...')
         if self.server is not None:

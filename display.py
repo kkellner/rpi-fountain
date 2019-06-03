@@ -12,6 +12,7 @@ import neopixel
 from enum import Enum
 
 logger = logging.getLogger('display')
+display_motion_logger = logging.getLogger('display_motion')
 
 class Status(Enum):
     NONE = 0
@@ -73,6 +74,9 @@ class Display:
 
     def motionHandler(self, channel):
         logger.info('In motionHandler channel: %s' % channel)
+
+        display_motion_logger.info('Display Motion Detected')
+
         self._stop_display_off_timer()
 
         self.showRealtimeWaterDepthState()

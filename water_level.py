@@ -14,12 +14,13 @@ import schedule
 
 logger = logging.getLogger('water_level')
 fountain_data = logging.getLogger('fountain_data')
+fountain_water_state_change = logging.getLogger('fountain_water_state_change')
 
 
 class WaterLevelState(Enum):
 
     FULL = (200, 90)         # Blink Green
-    OK = (95, 40)            # Green
+    OK = (95, 30)            # Green
     LOW = (70, 20)           # Blink Yellow
     CRITICAL = (25, 5)       # Red
     EMPTY = (10, -100)       # Blink Red
@@ -40,18 +41,22 @@ class WaterLevel:
     MM_PER_INCH = 0.0393701
 
     # Distance between top of IR sensor and bottom of tube (in inches)
-    TOTAL_DISTANCE_TO_BOTTOM_MM = 414
+    TOTAL_DISTANCE_TO_BOTTOM_MM = 455  # Old value was 414
     TOTAL_DISTANCE_TO_BOTTOM_INCHES = TOTAL_DISTANCE_TO_BOTTOM_MM * MM_PER_INCH
 
     # The depth of water in which the fountain is considered to be full
-    FULL_DEPTH_MM = 280
+    # 317mm is what sensor shows for 11-inches of real water level, even though 317mm=12.5inches.  Was 280mm
+    FULL_DEPTH_MM = 275
     FULL_DEPTH_INCHES = FULL_DEPTH_MM * MM_PER_INCH
 
     # The depth of water which no longer allows the pump to work
-    EMPTY_DEPTH_MM = 114
+    EMPTY_DEPTH_MM = 111  # This is 4.5 inches
     EMPTY_DEPTH_INCHES = EMPTY_DEPTH_MM * MM_PER_INCH
 
     def __init__(self, fountain):
+
+        self.temp_distance_to_water_mm = 0
+
         self.water_level_state = WaterLevelState.UNKNOWN
         self.water_depth_mm = 0
         self.state_change_notify_list = []
@@ -72,7 +77,7 @@ class WaterLevel:
 
             # Docs: https://schedule.readthedocs.io/en/stable/
             # DOcs: https://github.com/dbader/schedule
-            schedule.every().minute.at(":00").do(self.__log_data)
+            schedule.every().hour.at(":00").do(self.__log_data)
 
             # schedule.every().minute.do(self.__log_data)
             # schedule.every().hour.do(job)
@@ -100,7 +105,8 @@ class WaterLevel:
             # No change - do nothing
             return
         elif abs(self.water_depth_mm - water_depth_mm) == 2:
-            newValue = self.water_depth_mm - ((self.water_depth_mm - water_depth_mm) / 2)
+            newValue = self.water_depth_mm - \
+                ((self.water_depth_mm - water_depth_mm) / 2)
             logger.debug("XXXXX 2mm change of depth.  Old: %.f  Requested: %.f  Set to: %.f" %
                          (self.water_depth_mm, water_depth_mm, newValue))
             self.water_depth_mm = newValue
@@ -147,8 +153,14 @@ class WaterLevel:
         if current_state is None:
             current_state = WaterLevelState.UNKNOWN
 
-        logger.info('Update current water level state. Old: {} new:{}'.format(
-            self.water_level_state.name, current_state.name))
+        logger.info('Update current water level state. Old: %s new: %s',
+            self.water_level_state.name, current_state.name)
+
+        fountain_water_state_change.info(
+            'Water level state change. Old: %s new: %s  Water depth: %.2f mm  Percent: %.0f',
+            self.water_level_state.name, current_state.name,
+            self.water_depth_mm, self.get_percent_full())
+
         old_state = self.water_level_state
         self.water_level_state = current_state
         self.__notify_state_change(old_state, current_state)
@@ -191,6 +203,9 @@ class WaterLevel:
 
     def __calculate_water_depth_mm(self):
         distance_to_water = self.__measure_water_distance_mm()
+
+        self.temp_distance_to_water_mm = distance_to_water
+
         depth = WaterLevel.TOTAL_DISTANCE_TO_BOTTOM_MM - distance_to_water
         # The sensor is off a bit when dry. Make sure we don't have negative depth
         if depth < 0:

@@ -15,6 +15,7 @@ import socketserver
 import json
 import psutil
 from functools import partial
+import subprocess
 
 #fountain = None
 
@@ -31,7 +32,10 @@ class HttpServer():
             "/": "display",
             "/favicon.ico": "favicon",
             "/v1/data": "v1_data",
-            "/test": "test"
+            "/test": "test",
+            "/waterStateLog": "water_level_state_change_log",
+            "/waterDataLog": "data_log",
+            "/displayMotionLog": "display_motion_log"
             }
 
         socketserver.TCPServer.allow_reuse_address = True
@@ -105,6 +109,36 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.path = "favicon.ico"
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
+    def get_data_log(self):
+        cmd = "cat /var/log/fountain_data.log.1 /var/log/fountain_data.log  2>/dev/null  | tail -n 40"
+        self.run_command(cmd)
+        
+    def get_water_level_state_change_log(self):
+        cmd = "cat /var/log/fountain_data.log.1 /var/log/fountain_water_state_change.log  2>/dev/null  | tail -n 40"
+        self.run_command(cmd)
+
+    def get_display_motion_log(self):
+        cmd = "cat /var/log/fountain_data.log.1 /var/log/fountain_display_motion.log  2>/dev/null  | tail -n 40"
+        self.run_command(cmd)
+
+    def run_command(self, cmd):
+
+        p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
+        cmdOutput = p.stdout.strip()
+
+
+        # Write the response
+        self.protocol_version = 'HTTP/1.1'
+        self.send_response(200, 'OK')
+        self.send_header('Connection', 'Keep-Alive')
+        self.addCORSHeaders()
+
+        self.send_header('Content-type', 'text/plain;charset=UTF-8')
+        self.send_header("Content-Length", str(len(cmdOutput)))
+        self.end_headers()
+        self.wfile.write(bytes(cmdOutput, 'utf-8'))
+
+
     def get_test(self):
         water_depth_inches = self.fountain.water_level.get_depth_inches()
         water_percent_full = self.fountain.water_level.get_percent_full()
@@ -146,7 +180,8 @@ class GetRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "waterDepth_mm": water_depth_mm,
                 "cpuPercent": psutil.cpu_percent(),
                 "rpiTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
-                "rpiInfo": rpiInfo
+                "rpiInfo": rpiInfo,
+                "temp_distance_to_water_mm": self.fountain.water_level.temp_distance_to_water_mm
             }
 
         data = json.dumps(response)

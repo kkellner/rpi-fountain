@@ -4,7 +4,7 @@
 <head>
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <script type='text/javascript' src='http://code.jquery.com/jquery-1.9.1.js'></script>
+    <script type='text/javascript' src='https://code.jquery.com/jquery-1.9.1.js'></script>
     <script type='text/javascript'>//<![CDATA[ 
 
         // Used to convert "waterLevelState" to color
@@ -198,9 +198,18 @@
             <tr>
                 <th colspan="2">Details</th>
             </tr>
+
+
+            <tr>
+                    <td>temp_distance_to_water_mm:</td>
+                    <td><span id="temp_distance_to_water_mm"></span>  mm</td>
+            </tr>
+
+                
+
             <tr>
                 <td>Water Depth:</td>
-                <td><span id="waterDepth"></span> inches</td>
+                <td><span id="waterDepth_inches"></span> inches (<span id="waterDepth_mm"></span> mm)</td>
             </tr>
             <tr>
                 <td>Water State:</td>

@@ -99,13 +99,20 @@ class WaterLevel:
         if self.water_depth_mm == water_depth_mm:
             # No change - do nothing
             return
-        elif abs(self.water_depth_mm - water_depth_mm) > 1:
-            logger.debug("*** More then 1mm change of depth.  Old: %.f  New: %.f" %
+        elif abs(self.water_depth_mm - water_depth_mm) == 2:
+            newValue = self.water_depth_mm - ((self.water_depth_mm - water_depth_mm) / 2)
+            logger.debug("XXXXX 2mm change of depth.  Old: %.f  Requested: %.f  Set to: %.f" %
+                         (self.water_depth_mm, water_depth_mm, newValue))
+            self.water_depth_mm = newValue
+            self.__refresh_state()
+        elif abs(self.water_depth_mm - water_depth_mm) > 2:
+
+            logger.debug("XXXXX More then 2mm change of depth.  Old: %.f  New: %.f" %
                          (self.water_depth_mm, water_depth_mm))
             self.water_depth_mm = water_depth_mm
             self.__refresh_state()
         else:
-            logger.debug("*** Ignore water_depth_mm change because less then 2mm  Old: %.f  New: %.f" %
+            logger.debug("XXXXX Ignore water_depth_mm change because less then 2mm  Old: %.f  New: %.f" %
                          (self.water_depth_mm, water_depth_mm))
 
     def get_percent_full(self):

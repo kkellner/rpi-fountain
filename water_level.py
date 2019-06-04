@@ -21,7 +21,7 @@ class WaterLevelState(Enum):
 
     FULL = (200, 90)         # Blink Green
     OK = (95, 30)            # Green
-    LOW = (70, 20)           # Blink Yellow
+    LOW = (70, 15)           # Blink Yellow
     CRITICAL = (25, 5)       # Red
     EMPTY = (10, -100)       # Blink Red
     UNKNOWN = (1000, 1000)   # Gray

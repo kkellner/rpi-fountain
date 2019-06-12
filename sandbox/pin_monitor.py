@@ -36,5 +36,11 @@ def handle(pin):
 GPIO.add_event_detect(BTN_G, GPIO.BOTH, handle)
 
 logger.info("Monitor for pin state change")
-while True:
-    time.sleep(1)
+
+
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+        logger.info("Exit")
+        GPIO.cleanup()

@@ -32,7 +32,10 @@ class Notification:
         emailConfig = cfg['email']
 
         self.sender_email = emailConfig['sender_email']
-        self.receiver_email = emailConfig['receiver_email']
+        self.receiver_emails = emailConfig['receiver_emails']
+
+        self.status_page_url = emailConfig['status_page_url']
+
 
         self.host = emailConfig['host']
         self.port = emailConfig['port']
@@ -48,7 +51,7 @@ class Notification:
                      " oldState:" + str(oldState) +
                      " newState:"+str(newState) +
                      " waterLevelPct:" + str(waterLevel.get_percent_full()))
-        #self.send_water_level_state_change_email(oldState, newState)
+        self.send_water_level_state_change_email(oldState, newState)
 
     def send_water_level_state_change_email(self, oldState, newState):
 
@@ -72,14 +75,14 @@ class Notification:
                 waterDepth: %.1f<br/>
                 Old Water Level: %s<br/>
 
-                <a href="http://rpitest.local">Fountain Status</a> 
+                <a href="%s">Fountain Status</a> 
             </p>
         </body>
         </html>
         """
 
         bodyHtml = bodyTemplate % (
-            newState.name, waterPercentFull, waterDepthInches, oldState.name)
+            newState.name, waterPercentFull, waterDepthInches, oldState.name, self.status_page_url)
 
         self.send_email(subject, bodyHtml)
 
@@ -93,7 +96,7 @@ class Notification:
 
         message = MIMEMultipart()
         message["From"] = self.sender_email
-        message["To"] = self.receiver_email
+        message["To"] = self.receiver_emails
         message["Subject"] = subject
 
         part1 = MIMEText(bodyHtml, "html")
@@ -105,7 +108,7 @@ class Notification:
             server = smtplib.SMTP_SSL(self.host, self.port, context=context)
             server.login(self.login, self.password)
             server.sendmail(
-                self.sender_email, self.receiver_email, message.as_string()
+                self.sender_email, self.receiver_emails.split(','), message.as_string()
             )
             server.close()
             logger.info('Email sent!')

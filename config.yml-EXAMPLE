@@ -1,0 +1,9 @@
+email:
+    host: smtp.gmail.com
+    port: 465
+    login: SOME-EMAIL@gmail.com
+    password: GMAIL_PASSWORD
+    sender_email: SOME-EMAIL@gmail.com
+    receiver_emails: SOME-EMAIL@gmail.com,SOME-OTHER-EMAIL@yahoo.com
+    status_page_url: https://URL-TO-FOUNTAIN-STATUS-PAGE
+    

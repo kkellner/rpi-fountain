@@ -55,6 +55,7 @@ class WaterLevel:
 
     def __init__(self, fountain):
 
+        self.fountain = fountain
         self.temp_distance_to_water_mm = 0
 
         self.water_level_state = WaterLevelState.UNKNOWN
@@ -121,6 +122,7 @@ class WaterLevel:
             logger.debug("XXXXX Ignore water_depth_mm change because less then 2mm  Old: %.f  New: %.f" %
                          (self.water_depth_mm, water_depth_mm))
 
+
     def get_percent_full(self):
         """
         Calculate the percent of water tank full based on normal range.
@@ -137,6 +139,10 @@ class WaterLevel:
         This method should be called upon every update of self.water_depth_mm
         """
         percent_full = self.get_percent_full()
+
+        # MQTT publish current state
+        self.fountain.publish_current_state()
+
         # Check if current state is still correct
         current_state = self.water_level_state
         if percent_full <= current_state.high and percent_full >= current_state.low:

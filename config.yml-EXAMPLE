@@ -7,3 +7,13 @@ email:
     receiver_emails: SOME-EMAIL@gmail.com,SOME-OTHER-EMAIL@yahoo.com
     status_page_url: https://URL-TO-FOUNTAIN-STATUS-PAGE
     
+mqtt:
+  host: MQTT_SERVER
+  port: 1883
+  username: USERNAME
+  password: PASSWORD
+  queue:
+    queueNamespace: yukon
+    locationName: front
+    typeName: halloween-tombstone
+    deviceName: light  

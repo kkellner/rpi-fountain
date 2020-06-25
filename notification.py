@@ -51,6 +51,12 @@ class Notification:
                      " oldState:" + str(oldState) +
                      " newState:"+str(newState) +
                      " waterLevelPct:" + str(waterLevel.get_percent_full()))
+
+        # Do not send an email if water level is FULL or OK
+        if newState == WaterLevelState.FULL or newState == WaterLevelState.OK:
+            logger.debug("Water level is FULL or OK so we are NOT sending an email")
+            return
+
         self.send_water_level_state_change_email(oldState, newState)
 
     def send_water_level_state_change_email(self, oldState, newState):

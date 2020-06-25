@@ -143,6 +143,9 @@ class Display:
 
     def _displayRealtimeWaterState(self):
 
+        if not self.fountain.startup_complete:
+            return
+
         previous_water_depth_state = None
         while not self.display_status_thread_stop:
             water_depth_state = self.fountain.water_level.get_state()

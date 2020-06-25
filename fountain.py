@@ -15,6 +15,8 @@ import logging, logging.handlers
 import signal
 import sys
 import os
+import psutil
+from datetime import datetime
 
 from temperature import Temperature
 from water_level import WaterLevel
@@ -22,7 +24,7 @@ from display import Display, Status
 from http_request import HttpServer
 from notification import Notification
 from rpi_info import RpiInfo
-
+from pubsub import Pubsub
 
 logger = logging.getLogger('fountain')
 
@@ -31,12 +33,14 @@ class Fountain:
     """Handle fountain display operations"""
 
     def __init__(self):
+        self.pubsub = None
         self.server = None
         self.display = None
         self.temperature = None
         self.water_level = None
         self.notification = None
         self.rpi_info = None
+        self.startup_complete = False
 
         # Docs: https://docs.python.org/3/library/logging.html
         # Docs on config: https://docs.python.org/3/library/logging.config.html
@@ -69,6 +73,8 @@ class Fountain:
             self.server.shutdown()
         if self.display is not None:
             self.display.shutdown()
+        if self.pubsub is not None:
+            self.pubsub.shutdown()    
         GPIO.cleanup()
         sys.tracebacklimit = 0
         sys.exit(0)
@@ -79,14 +85,51 @@ class Fountain:
         self.display = Display(self)
         self.display.showStatus(Status.STARTUP, 2)
 
+        self.pubsub = Pubsub(self)
         self.rpi_info = RpiInfo(self)
         self.water_level = WaterLevel(self)
         self.temperature = Temperature(self)
         self.notification = Notification(self)
 
+        self.startup_complete = True
+        self.publish_current_state()
+
         self.server = HttpServer(self)
         # the following is a blocking call
         self.server.run()
+
+
+    def publish_current_state(self):
+
+        if not self.startup_complete:
+            return
+
+        water_depth_mm = self.water_level.get_depth_mm()
+        water_depth_inches = self.water_level.get_depth_inches()
+        water_percent_full = self.water_level.get_percent_full()
+        water_depth_state = self.water_level.get_state()
+
+        rpiInfo = self.rpi_info.get_info()
+
+        #self.temperature.water_temperature
+
+        data = {
+                "waterLevelPercentFull": water_percent_full,
+                "waterLevelState": water_depth_state.name,
+                "waterTemperature": self.temperature.water_temperature,
+                "fountainTemperature": self.temperature.fountain_temperature,
+                "circuitTemperature": self.temperature.circuit_temperature,
+                "waterDepth": water_depth_inches,
+                "waterDepth_inches": water_depth_inches,
+                "waterDepth_mm": water_depth_mm,
+                "cpuPercent": psutil.cpu_percent(),
+                "rpiTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+                "rpiInfo": rpiInfo,
+                "temp_distance_to_water_mm": self.water_level.temp_distance_to_water_mm
+            }
+
+        #data = json.dumps(response)
+        self.pubsub.publishStatus(data)
 
 
 def main():

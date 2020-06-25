@@ -92,11 +92,22 @@ class Fountain:
         self.notification = Notification(self)
 
         self.startup_complete = True
-        self.publish_current_state()
+        self.__start_publish_status_thread()
 
         self.server = HttpServer(self)
         # the following is a blocking call
         self.server.run()
+
+    def __start_publish_status_thread(self):
+        logging_thread = threading.Thread(
+            target=self.__publish_status_thread)
+        logging_thread.daemon = True
+        logging_thread.start()
+
+    def __publish_status_thread(self):
+        while True:
+            self.publish_current_state()
+            time.sleep(60)
 
 
     def publish_current_state(self):

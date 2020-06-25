@@ -69,7 +69,10 @@ class Pubsub:
 
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
-        deathPayload = "DISCONNECTED"
+        # I want to use "DISCONNECTED" to indicate a crash vs a clean shutdown but hass
+        # only allows for one value for "payload_not_available"
+        #deathPayload = "DISCONNECTED"
+        deathPayload = "offline"
         self.client.will_set(self.queueNodeStatus, deathPayload, 0, True)
 
         #self.client.message_callback_add(self.queueDeviceAllStatus, self.on_message_light_status)

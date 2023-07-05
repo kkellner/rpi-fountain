@@ -45,7 +45,8 @@ class Fountain:
         # Docs: https://docs.python.org/3/library/logging.html
         # Docs on config: https://docs.python.org/3/library/logging.config.html
         FORMAT = '%(asctime)-15s %(threadName)-10s %(levelname)6s %(message)s'
-        logging.basicConfig(level=logging.NOTSET, format=FORMAT)
+        #logging.basicConfig(level=logging.NOTSET, format=FORMAT)
+        logging.basicConfig(level=logging.INFO, format=FORMAT)
         self.__setup_logger("fountain_data", "/var/log/fountain_data.log")
         self.__setup_logger("fountain_water_state_change", "/var/log/fountain_water_state_change.log")
         self.__setup_logger("display_motion", "/var/log/fountain_display_motion.log")

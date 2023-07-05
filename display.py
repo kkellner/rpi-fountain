@@ -77,6 +77,11 @@ class Display:
 
         display_motion_logger.info('Display Motion Detected')
 
+        # Disable display - 08/08/2020
+        # Do not show display on motion
+        if True:
+            return
+
         self._stop_display_off_timer()
 
         self.showRealtimeWaterDepthState()

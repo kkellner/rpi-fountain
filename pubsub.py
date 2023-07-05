@@ -53,6 +53,7 @@ class Pubsub:
         # Node name example: yukon/node/rpibasalt1/status
         self.nodeName = os.uname().nodename
         self.queueNodeStatus = self.queueNamespace + "/node/" + self.nodeName + "/status"
+        self.queueNodeReboot = self.queueNamespace + "/node/" + self.nodeName + "/reboot"
 
         # Device name example: yukon/device/basalt/driveway/basalt1/light/status
         self.queueDeviceStatus = self.queueNamespace + "/device/" + self.typeName + "/" + self.locationName + "/" + self.nodeName + "/" + self.deviceName + "/status"
@@ -76,6 +77,9 @@ class Pubsub:
         self.client.will_set(self.queueNodeStatus, deathPayload, 0, True)
 
         #self.client.message_callback_add(self.queueDeviceAllStatus, self.on_message_light_status)
+        self.client.message_callback_add(self.queueNodeReboot, self.on_message_reboot)
+        logger.info("reboot queue: %s", self.queueNodeReboot)
+
         self.client.on_message = self.on_message
 
         self.client.username_pw_set(self.mqttBrokerUsername, self.mqttBrokerPassword)
@@ -118,6 +122,7 @@ class Pubsub:
         logger.info("Connected with result code "+str(rc))
         self.publishBirth()
         self.client.subscribe(self.queueDeviceAllStatus, qos=2)
+        self.client.subscribe(self.queueNodeReboot, qos=2)
 
     def on_disconnect(self, client, userdata, rc):
         logger.warn("Disconnected with result code "+str(rc))
@@ -155,6 +160,25 @@ class Pubsub:
     #     except: # catch *all* exceptions
     #         e = sys.exc_info()
     #         logger.error("Exception in on_message_light_status: %s", e)
+
+
+    ######################################################################
+    # Subscribe: reboot node message
+    ######################################################################
+    def on_message_reboot(self, client, userdata, msg):
+        try:
+            topic=msg.topic
+            logger.info("Got message to reboot from %s timestamp: %s", topic, msg.timestamp)
+            os.system('sudo reboot')
+            # m_decode=str(msg.payload.decode("utf-8","ignore"))
+            #logger.info("data Received type %s",type(m_decode))
+            # logger.info("data Received: %s",m_decode)
+            # m_in=json.loads(m_decode) #decode json data
+
+        except: # catch *all* exceptions
+            e = sys.exc_info()
+            logger.error("Exception in on_message_reboot: %s", e)
+
 
     def shutdown(self):
         logger.info("Shutdown -- disconnect from MQTT broker")
